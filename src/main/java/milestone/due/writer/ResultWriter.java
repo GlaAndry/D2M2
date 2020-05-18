@@ -8,7 +8,6 @@ import java.io.FileInputStream;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.io.InputStream;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Properties;
 import java.util.logging.Level;
@@ -23,7 +22,7 @@ public class ResultWriter {
      * [DATASET, #TRAININGRELEASE, CLASSIFIER, PRECISION, RECALL, AUC, KAPPA]
      */
 
-    private static final Logger LOGGER = Logger.getLogger(MakeARFFFile.class.getName());
+    private static final Logger LOGGER = Logger.getLogger(ResultWriter.class.getName());
 
     static String m1d2Test = "";
     static String m1d2Train = "";

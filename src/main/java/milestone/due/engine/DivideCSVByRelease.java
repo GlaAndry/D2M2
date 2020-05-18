@@ -17,7 +17,7 @@ public class DivideCSVByRelease {
      * da poter utilizzare il metodo Walk Forward attraverso Weka.
      */
 
-    private static final Logger LOGGER = Logger.getLogger(MakeARFFFile.class.getName());
+    private static final Logger LOGGER = Logger.getLogger(DivideCSVByRelease.class.getName());
 
     static String m1d2Path = "";
     static String prefix = "";
@@ -107,9 +107,6 @@ public class DivideCSVByRelease {
 
         List<String[]> read = csvReader.readAll();
         List<String[]> read2 = read.subList(1, read.size()); // rimuovo la prima stringa.
-
-        String release = read2.get(0)[0];
-        String lastRelase = "";
 
         List<String[]> out = new ArrayList<>();
 

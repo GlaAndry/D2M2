@@ -32,7 +32,7 @@ public class WekaEngine {
      * Classificatori --> RandomForest, NaiveBayes, IBK
      */
 
-    private static final Logger LOGGER = Logger.getLogger(MakeARFFFile.class.getName());
+    private static final Logger LOGGER = Logger.getLogger(WekaEngine.class.getName());
 
     static String m1d2Test = "";
     static String m1d2Train = "";
@@ -55,16 +55,12 @@ public class WekaEngine {
             if (value == 0) {
                 m1d2Test = prop.getProperty("BOOKARFFTESTING");
                 m1d2Train = prop.getProperty("BOOKARFFTRAINING");
-                //m1d2Test = prop.getProperty("M1D2TESTBOOK");
-                //m1d2Train = prop.getProperty("M1D2TRAINBOOK");
                 prefix = prop.getProperty("prefixBOOK");
                 out = prop.getProperty("OUTBOOK");
                 numRelease = prop.getProperty("NUMBOOK");
             } else {
                 m1d2Test = prop.getProperty("TAJOARFFTESTING");
                 m1d2Train = prop.getProperty("TAJOARFFTRAINING");
-                //m1d2Test = prop.getProperty("M1D2TESTTAJO");
-                //m1d2Train = prop.getProperty("M1D2TRAINTAJO");
                 prefix = prop.getProperty("prefixTAJO");
                 out = prop.getProperty("OUTTAJO");
                 numRelease = prop.getProperty("NUMTAJO");
@@ -85,9 +81,6 @@ public class WekaEngine {
          *
          * @param numOfSteps: Int --> Numero di passi per la validazione.
          */
-
-        //String tst = "C:\\Users\\Alessio Mazzola\\IdeaProjects\\Dev2M2\\src\\main\\resources\\outCSVmethods\\testing\\M1D2TAJO2testing.csv";
-        //String trn = "C:\\Users\\Alessio Mazzola\\IdeaProjects\\Dev2M2\\src\\main\\resources\\outCSVmethods\\training\\M1D2TAJO2training.csv";
         String tst = "";
         String trn = "";
         int lock = 0;
@@ -105,7 +98,6 @@ public class WekaEngine {
                 new WekaEngine().calculateNaiveBayes(null, ts, 0, i, ret);
                 new WekaEngine().calculateIBK(null, ts, 0, i, ret);
 
-                //TODO risolvere per tajo: Exception in thread "main" weka.core.UnsupportedAttributeTypeException: weka.classifiers.trees.RandomTree: Cannot handle unary class!
             } else {
 
                 ConverterUtils.DataSource tr = new ConverterUtils.DataSource(trn);
@@ -130,23 +122,13 @@ public class WekaEngine {
         RandomForest classifier = new RandomForest();
 
         if (value == 0) {
-            //Instances training = train.getDataSet();
 
             int numAttr = testing.numAttributes();
-            //training.setClassIndex(numAttr - 1);
             testing.setClassIndex(numAttr - 1);
-
             classifier.buildClassifier(testing);
 
             Evaluation eval = new Evaluation(testing);
             eval.evaluateModel(classifier, testing);
-
-            System.out.println("\n");
-            System.out.println("AUC = " + eval.areaUnderROC(1));
-            System.out.println("kappa = " + eval.kappa());
-            System.out.println("Precision =" + eval.precision(1));
-            System.out.println("Recall =" + eval.recall(1));
-            System.out.println("\n");
 
             list.add(new String[]{prefix, Integer.toString(counter), "Random Forest", Double.toString(eval.precision(1)),
                     Double.toString(eval.recall(1)), Double.toString(eval.areaUnderROC(1)), Double.toString(eval.kappa())});
@@ -163,13 +145,6 @@ public class WekaEngine {
             Evaluation eval = new Evaluation(testing);
 
             eval.evaluateModel(classifier, testing);
-
-            System.out.println("\n");
-            System.out.println("AUC = " + eval.areaUnderROC(1));
-            System.out.println("kappa = " + eval.kappa());
-            System.out.println("Precision =" + eval.precision(1));
-            System.out.println("Recall =" + eval.recall(1));
-            System.out.println("\n");
 
             list.add(new String[]{prefix, Integer.toString(counter), "Random Forest", Double.toString(eval.precision(1)),
                     Double.toString(eval.recall(1)), Double.toString(eval.areaUnderROC(1)), Double.toString(eval.kappa())});
@@ -179,16 +154,10 @@ public class WekaEngine {
 
     private void calculateNaiveBayes(ConverterUtils.DataSource train, ConverterUtils.DataSource test, int value, int counter, List<String[]> list) throws Exception {
 
-
-        //Instances testing = test.getDataSet();
-        //Evaluation eval = new Evaluation(testing);
-
         if (value == 0) {
             Instances testing = test.getDataSet();
-            //Instances training = train.getDataSet();
 
             int numAttr = testing.numAttributes();
-            //training.setClassIndex(numAttr - 1);
             testing.setClassIndex(numAttr - 1);
 
             NaiveBayes classifier = new NaiveBayes();
@@ -199,12 +168,6 @@ public class WekaEngine {
 
             eval.evaluateModel(classifier, testing);
 
-            System.out.println("\n");
-            System.out.println("AUC = " + eval.areaUnderROC(1));
-            System.out.println("kappa = " + eval.kappa());
-            System.out.println("Precision =" + eval.precision(1));
-            System.out.println("Recall =" + eval.recall(1));
-            System.out.println("\n");
             list.add(new String[]{prefix, Integer.toString(counter), "Naive Bayes", Double.toString(eval.precision(1)),
                     Double.toString(eval.recall(1)), Double.toString(eval.areaUnderROC(1)), Double.toString(eval.kappa())});
         }
@@ -226,12 +189,6 @@ public class WekaEngine {
 
             eval.evaluateModel(classifier, testing);
 
-            System.out.println("\n");
-            System.out.println("AUC = " + eval.areaUnderROC(1));
-            System.out.println("kappa = " + eval.kappa());
-            System.out.println("Precision =" + eval.precision(1));
-            System.out.println("Recall =" + eval.recall(1));
-            System.out.println("\n");
             list.add(new String[]{prefix, Integer.toString(counter), "Naive Bayes", Double.toString(eval.precision(1)),
                     Double.toString(eval.recall(1)), Double.toString(eval.areaUnderROC(1)), Double.toString(eval.kappa())});
         }
@@ -240,16 +197,12 @@ public class WekaEngine {
 
     private void calculateIBK(ConverterUtils.DataSource train, ConverterUtils.DataSource test, int value, int counter, List<String[]> list) throws Exception {
 
-
-        //Instances testing = test.getDataSet();
-        //Evaluation eval = new Evaluation(testing);
-
         if (value == 0) {
             Instances testing = test.getDataSet();
-            //Instances training = train.getDataSet();
+
 
             int numAttr = testing.numAttributes();
-            //training.setClassIndex(numAttr - 1);
+
             testing.setClassIndex(numAttr - 1);
 
             IBk classifier = new IBk();
@@ -260,12 +213,7 @@ public class WekaEngine {
 
             eval.evaluateModel(classifier, testing);
 
-            System.out.println("\n");
-            System.out.println("AUC = " + eval.areaUnderROC(1));
-            System.out.println("kappa = " + eval.kappa());
-            System.out.println("Precision = " + eval.precision(1));
-            System.out.println("Recall = " + eval.recall(1));
-            System.out.println("\n");
+
             list.add(new String[]{prefix, Integer.toString(counter), "IBK", Double.toString(eval.precision(1)),
                     Double.toString(eval.recall(1)), Double.toString(eval.areaUnderROC(1)), Double.toString(eval.kappa())});
         }
@@ -286,19 +234,13 @@ public class WekaEngine {
 
             eval.evaluateModel(classifier, testing);
 
-            System.out.println("\n");
-            System.out.println("AUC = " + eval.areaUnderROC(1));
-            System.out.println("kappa = " + eval.kappa());
-            System.out.println("Precision =" + eval.precision(1));
-            System.out.println("Recall =" + eval.recall(1));
-            System.out.println("\n");
             list.add(new String[]{prefix, Integer.toString(counter), "IBK", Double.toString(eval.precision(1)),
                     Double.toString(eval.recall(1)), Double.toString(eval.areaUnderROC(1)), Double.toString(eval.kappa())});
         }
 
     }
 
-    private void writeCSV(List<String[]> wrt) throws Exception {
+    private void writeCSV(List<String[]> wrt) {
 
         try (FileWriter fileWriter = new FileWriter(out);
              CSVWriter csvWriter = new CSVWriter(fileWriter)) {

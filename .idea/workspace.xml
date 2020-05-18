@@ -38,20 +38,21 @@
     <property name="RunOnceActivity.ShowReadmeOnStart" value="true" />
     <property name="WebServerToolWindowFactoryState" value="false" />
     <property name="aspect.path.notification.shown" value="true" />
-    <property name="last_opened_file_path" value="$PROJECT_DIR$/src/main/resources/csvFile" />
+    <property name="last_opened_file_path" value="$USER_HOME$/Desktop/Prove ISW2/Deliv2Milestone2/trunk" />
     <property name="project.structure.last.edited" value="Modules" />
     <property name="project.structure.proportion" value="0.15" />
     <property name="project.structure.side.proportion" value="0.2" />
     <property name="settings.editor.selected.configurable" value="reference.settings.deploy.options" />
   </component>
   <component name="RecentsManager">
-    <key name="MoveFile.RECENT_KEYS">
+    <key name="CopyFile.RECENT_KEYS">
+      <recent name="C:\Users\Alessio Mazzola\IdeaProjects\Dev2M2" />
       <recent name="C:\Users\Alessio Mazzola\IdeaProjects\Dev2M2\src\main\resources\csvFile" />
     </key>
     <key name="CopyClassDialog.RECENTS_KEY">
       <recent name="milestone.due.writer" />
     </key>
-    <key name="CopyFile.RECENT_KEYS">
+    <key name="MoveFile.RECENT_KEYS">
       <recent name="C:\Users\Alessio Mazzola\IdeaProjects\Dev2M2\src\main\resources\csvFile" />
     </key>
   </component>
@@ -150,7 +151,7 @@
       <workItem from="1589183929722" duration="2429000" />
       <workItem from="1589647355643" duration="3195000" />
       <workItem from="1589705603509" duration="23452000" />
-      <workItem from="1589789526372" duration="1640000" />
+      <workItem from="1589789526372" duration="2646000" />
     </task>
     <servers />
   </component>
@@ -162,6 +163,10 @@
       <screen x="2560" y="0" width="2560" height="1400" />
     </state>
     <state x="3432" y="358" key="#Project_Structure/0.0.2560.1400/2560.0.2560.1400@2560.0.2560.1400" timestamp="1589030546126" />
+    <state x="3620" y="426" key="FileChooserDialogImpl" timestamp="1589791263131">
+      <screen x="2560" y="0" width="2560" height="1400" />
+    </state>
+    <state x="3620" y="426" key="FileChooserDialogImpl/0.0.2560.1400/2560.0.2560.1400@2560.0.2560.1400" timestamp="1589791263131" />
     <state width="2517" height="307" key="GridCell.Tab.0.bottom" timestamp="1589790372798">
       <screen x="2560" y="0" width="2560" height="1400" />
     </state>

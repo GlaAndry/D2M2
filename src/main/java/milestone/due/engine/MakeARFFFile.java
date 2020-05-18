@@ -67,14 +67,16 @@ public class MakeARFFFile {
 
         int counter=0;
 
-        System.out.println("Creo il file arff...");
+        LOGGER.info("Creo il file arff...\n");
 
         try (FileWriter fileWriter = new FileWriter(path)) {
             fileWriter.append("@relation ").append(csvName);
             fileWriter.append("\n");
 
             for (int i = 0; i < parameters.length; i++) {
-                System.out.println("attributo: "+ parameters[i]);
+                LOGGER.info("attributo: ");
+                LOGGER.info(parameters[i]);
+                LOGGER.info("\n");
                 fileWriter.append("@attribute ").append(parameters[i]).append(" ").append(scanner.nextLine());
                 fileWriter.append("\n");
             }
@@ -97,12 +99,8 @@ public class MakeARFFFile {
                 fileWriter.append("\n");
 
             }
-
-
         }
-
-        System.out.println("Fatto!");
-
+        LOGGER.info("Fatto!\n");
     }
 
     public static void main(String[] args) throws IOException {

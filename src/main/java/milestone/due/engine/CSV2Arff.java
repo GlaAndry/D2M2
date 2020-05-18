@@ -17,16 +17,18 @@ import java.util.logging.Logger;
 public class CSV2Arff {
 
 
-    private static final Logger LOGGER = Logger.getLogger(MakeARFFFile.class.getName());
+    private static final Logger LOGGER = Logger.getLogger(CSV2Arff.class.getName());
 
-    static String CSVPathTraining = "";
-    static String CSVPathTesting = "";
+    static String csvPathTraining = "";
+    static String csvPathTesting = "";
 
-    static String ArffPathTraining = "";
-    static String ArffPathTesting = "";
+    static String arffPathTraining = "";
+    static String arffPathTesting = "";
 
     static String prefix = "";
     static String numRelease = "";
+
+    final String prfName = "\\M1D2";
 
 
     private static void importResources(int value) {
@@ -42,22 +44,22 @@ public class CSV2Arff {
 
 
             if (value == 0) {
-                CSVPathTraining = prop.getProperty("M1D2TRAINBOOK");
-                CSVPathTesting = prop.getProperty("M1D2TESTBOOK");
+                csvPathTraining = prop.getProperty("M1D2TRAINBOOK");
+                csvPathTesting = prop.getProperty("M1D2TESTBOOK");
 
-                ArffPathTraining = prop.getProperty("BOOKARFFTRAINING");
-                ArffPathTesting = prop.getProperty("BOOKARFFTESTING");
+                arffPathTraining = prop.getProperty("BOOKARFFTRAINING");
+                arffPathTesting = prop.getProperty("BOOKARFFTESTING");
 
                 prefix = prop.getProperty("prefixBOOK");
                 numRelease = prop.getProperty("NUMBOOK");
 
 
             } else {
-                CSVPathTraining = prop.getProperty("M1D2TRAINTAJO");
-                CSVPathTesting = prop.getProperty("M1D2TESTTAJO");
+                csvPathTraining = prop.getProperty("M1D2TRAINTAJO");
+                csvPathTesting = prop.getProperty("M1D2TESTTAJO");
 
-                ArffPathTraining = prop.getProperty("TAJOARFFTRAINING");
-                ArffPathTesting = prop.getProperty("TAJOARFFTESTING");
+                arffPathTraining = prop.getProperty("TAJOARFFTRAINING");
+                arffPathTesting = prop.getProperty("TAJOARFFTESTING");
 
                 prefix = prop.getProperty("prefixTAJO");
                 numRelease = prop.getProperty("NUMTAJO");
@@ -77,14 +79,14 @@ public class CSV2Arff {
 
                 // load CSV
                 CSVLoader loader = new CSVLoader();
-                loader.setSource(new File(CSVPathTesting+"\\M1D2"+prefix+i+"testing.csv"));
+                loader.setSource(new File(csvPathTesting +prfName+prefix+i+"testing.csv"));
                 Instances data = loader.getDataSet();//get instances object
 
                 // save ARFF
                 ArffSaver saver = new ArffSaver();
                 saver.setInstances(data);//set the dataset we want to convert
                 //and save as ARFF
-                saver.setFile(new File(ArffPathTesting+"\\M1D2"+prefix+i+"testing.arff"));
+                saver.setFile(new File(arffPathTesting +prfName+prefix+i+"testing.arff"));
                 saver.writeBatch();
 
             }
@@ -93,14 +95,14 @@ public class CSV2Arff {
 
                 // load CSV
                 CSVLoader loader = new CSVLoader();
-                loader.setSource(new File(CSVPathTraining+"\\M1D2"+prefix+i+"training.csv"));
+                loader.setSource(new File(csvPathTraining +prfName+prefix+i+"training.csv"));
                 Instances data = loader.getDataSet();//get instances object
 
                 // save ARFF
                 ArffSaver saver = new ArffSaver();
                 saver.setInstances(data);//set the dataset we want to convert
                 //and save as ARFF
-                saver.setFile(new File(ArffPathTraining+"\\M1D2"+prefix+i+"training.arff"));
+                saver.setFile(new File(arffPathTraining +prfName+prefix+i+"training.arff"));
                 saver.writeBatch();
             }
         }
