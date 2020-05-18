@@ -1,0 +1,269 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="ChangeListManager">
+    <list default="true" id="d670fdb7-38d0-4950-b75a-83f10e12b2b4" name="Default Changelist" comment="" />
+    <option name="SHOW_DIALOG" value="false" />
+    <option name="HIGHLIGHT_CONFLICTS" value="true" />
+    <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
+    <option name="LAST_RESOLUTION" value="IGNORE" />
+  </component>
+  <component name="FileTemplateManagerImpl">
+    <option name="RECENT_TEMPLATES">
+      <list>
+        <option value="Class" />
+      </list>
+    </option>
+  </component>
+  <component name="JsFlowSettings">
+    <service-enabled>true</service-enabled>
+    <exe-path />
+    <other-services-enabled>true</other-services-enabled>
+    <auto-save>true</auto-save>
+  </component>
+  <component name="MavenImportPreferences">
+    <option name="importingSettings">
+      <MavenImportingSettings>
+        <option name="importAutomatically" value="true" />
+        <option name="vmOptionsForImporter" value="-Xmx768m" />
+      </MavenImportingSettings>
+    </option>
+  </component>
+  <component name="ProjectId" id="1bfjveAkfkc10LjbdNjRhZrIVCK" />
+  <component name="ProjectViewState">
+    <option name="hideEmptyMiddlePackages" value="true" />
+    <option name="showExcludedFiles" value="true" />
+    <option name="showLibraryContents" value="true" />
+  </component>
+  <component name="PropertiesComponent">
+    <property name="RunOnceActivity.ShowReadmeOnStart" value="true" />
+    <property name="WebServerToolWindowFactoryState" value="false" />
+    <property name="aspect.path.notification.shown" value="true" />
+    <property name="last_opened_file_path" value="$PROJECT_DIR$/src/main/resources/csvFile" />
+    <property name="project.structure.last.edited" value="Modules" />
+    <property name="project.structure.proportion" value="0.15" />
+    <property name="project.structure.side.proportion" value="0.2" />
+    <property name="settings.editor.selected.configurable" value="reference.settings.deploy.options" />
+  </component>
+  <component name="RecentsManager">
+    <key name="MoveFile.RECENT_KEYS">
+      <recent name="C:\Users\Alessio Mazzola\IdeaProjects\Dev2M2\src\main\resources\csvFile" />
+    </key>
+    <key name="CopyClassDialog.RECENTS_KEY">
+      <recent name="milestone.due.writer" />
+    </key>
+    <key name="CopyFile.RECENT_KEYS">
+      <recent name="C:\Users\Alessio Mazzola\IdeaProjects\Dev2M2\src\main\resources\csvFile" />
+    </key>
+  </component>
+  <component name="RunAnythingCache">
+    <option name="myCommands">
+      <command value="mvn clean install" />
+    </option>
+  </component>
+  <component name="RunManager" selected="Application.WekaEngine">
+    <configuration name="CSV2Arff" type="Application" factoryName="Application" temporary="true" nameIsGenerated="true">
+      <option name="MAIN_CLASS_NAME" value="milestone.due.engine.CSV2Arff" />
+      <module name="D2M2" />
+      <extension name="coverage">
+        <pattern>
+          <option name="PATTERN" value="milestone.due.engine.*" />
+          <option name="ENABLED" value="true" />
+        </pattern>
+      </extension>
+      <method v="2">
+        <option name="Make" enabled="true" />
+      </method>
+    </configuration>
+    <configuration name="DivideCSVByRelease" type="Application" factoryName="Application" temporary="true" nameIsGenerated="true">
+      <option name="MAIN_CLASS_NAME" value="milestone.due.engine.DivideCSVByRelease" />
+      <module name="D2M2" />
+      <extension name="coverage">
+        <pattern>
+          <option name="PATTERN" value="milestone.due.engine.*" />
+          <option name="ENABLED" value="true" />
+        </pattern>
+      </extension>
+      <method v="2">
+        <option name="Make" enabled="true" />
+      </method>
+    </configuration>
+    <configuration name="PropertiesWriter" type="Application" factoryName="Application" temporary="true" nameIsGenerated="true">
+      <option name="MAIN_CLASS_NAME" value="milestone.due.writer.PropertiesWriter" />
+      <module name="D2M2" />
+      <extension name="coverage">
+        <pattern>
+          <option name="PATTERN" value="milestone.due.writer.*" />
+          <option name="ENABLED" value="true" />
+        </pattern>
+      </extension>
+      <method v="2">
+        <option name="Make" enabled="true" />
+      </method>
+    </configuration>
+    <configuration name="ResultWriter" type="Application" factoryName="Application" temporary="true" nameIsGenerated="true">
+      <option name="MAIN_CLASS_NAME" value="milestone.due.writer.ResultWriter" />
+      <module name="D2M2" />
+      <extension name="coverage">
+        <pattern>
+          <option name="PATTERN" value="milestone.due.writer.*" />
+          <option name="ENABLED" value="true" />
+        </pattern>
+      </extension>
+      <method v="2">
+        <option name="Make" enabled="true" />
+      </method>
+    </configuration>
+    <configuration name="WekaEngine" type="Application" factoryName="Application" temporary="true" nameIsGenerated="true">
+      <option name="MAIN_CLASS_NAME" value="milestone.due.engine.WekaEngine" />
+      <module name="D2M2" />
+      <extension name="coverage">
+        <pattern>
+          <option name="PATTERN" value="milestone.due.engine.*" />
+          <option name="ENABLED" value="true" />
+        </pattern>
+      </extension>
+      <method v="2">
+        <option name="Make" enabled="true" />
+      </method>
+    </configuration>
+    <recent_temporary>
+      <list>
+        <item itemvalue="Application.WekaEngine" />
+        <item itemvalue="Application.CSV2Arff" />
+        <item itemvalue="Application.PropertiesWriter" />
+        <item itemvalue="Application.DivideCSVByRelease" />
+        <item itemvalue="Application.ResultWriter" />
+      </list>
+    </recent_temporary>
+  </component>
+  <component name="SvnConfiguration">
+    <configuration />
+  </component>
+  <component name="TaskManager">
+    <task active="true" id="Default" summary="Default task">
+      <changelist id="d670fdb7-38d0-4950-b75a-83f10e12b2b4" name="Default Changelist" comment="" />
+      <created>1589030273099</created>
+      <option name="number" value="Default" />
+      <option name="presentableId" value="Default" />
+      <updated>1589030273099</updated>
+      <workItem from="1589030276632" duration="6465000" />
+      <workItem from="1589183929722" duration="2429000" />
+      <workItem from="1589647355643" duration="3195000" />
+      <workItem from="1589705603509" duration="23452000" />
+      <workItem from="1589789526372" duration="1640000" />
+    </task>
+    <servers />
+  </component>
+  <component name="TypeScriptGeneratedFilesManager">
+    <option name="version" value="1" />
+  </component>
+  <component name="WindowStateProjectService">
+    <state x="3432" y="358" key="#Project_Structure" timestamp="1589030546126">
+      <screen x="2560" y="0" width="2560" height="1400" />
+    </state>
+    <state x="3432" y="358" key="#Project_Structure/0.0.2560.1400/2560.0.2560.1400@2560.0.2560.1400" timestamp="1589030546126" />
+    <state width="2517" height="307" key="GridCell.Tab.0.bottom" timestamp="1589790372798">
+      <screen x="2560" y="0" width="2560" height="1400" />
+    </state>
+    <state width="2517" height="307" key="GridCell.Tab.0.bottom/0.0.2560.1400/2560.0.2560.1400@2560.0.2560.1400" timestamp="1589790372798" />
+    <state width="2517" height="307" key="GridCell.Tab.0.center" timestamp="1589790372798">
+      <screen x="2560" y="0" width="2560" height="1400" />
+    </state>
+    <state width="2517" height="307" key="GridCell.Tab.0.center/0.0.2560.1400/2560.0.2560.1400@2560.0.2560.1400" timestamp="1589790372798" />
+    <state width="2517" height="307" key="GridCell.Tab.0.left" timestamp="1589790372797">
+      <screen x="2560" y="0" width="2560" height="1400" />
+    </state>
+    <state width="2517" height="307" key="GridCell.Tab.0.left/0.0.2560.1400/2560.0.2560.1400@2560.0.2560.1400" timestamp="1589790372797" />
+    <state width="2517" height="307" key="GridCell.Tab.0.right" timestamp="1589790372798">
+      <screen x="2560" y="0" width="2560" height="1400" />
+    </state>
+    <state width="2517" height="307" key="GridCell.Tab.0.right/0.0.2560.1400/2560.0.2560.1400@2560.0.2560.1400" timestamp="1589790372798" />
+    <state width="2517" height="492" key="GridCell.Tab.1.bottom" timestamp="1589751997970">
+      <screen x="2560" y="0" width="2560" height="1400" />
+    </state>
+    <state width="2517" height="492" key="GridCell.Tab.1.bottom/0.0.2560.1400/2560.0.2560.1400@2560.0.2560.1400" timestamp="1589751997970" />
+    <state width="2517" height="492" key="GridCell.Tab.1.center" timestamp="1589751997970">
+      <screen x="2560" y="0" width="2560" height="1400" />
+    </state>
+    <state width="2517" height="492" key="GridCell.Tab.1.center/0.0.2560.1400/2560.0.2560.1400@2560.0.2560.1400" timestamp="1589751997970" />
+    <state width="2517" height="492" key="GridCell.Tab.1.left" timestamp="1589751997970">
+      <screen x="2560" y="0" width="2560" height="1400" />
+    </state>
+    <state width="2517" height="492" key="GridCell.Tab.1.left/0.0.2560.1400/2560.0.2560.1400@2560.0.2560.1400" timestamp="1589751997970" />
+    <state width="2517" height="492" key="GridCell.Tab.1.right" timestamp="1589751997970">
+      <screen x="2560" y="0" width="2560" height="1400" />
+    </state>
+    <state width="2517" height="492" key="GridCell.Tab.1.right/0.0.2560.1400/2560.0.2560.1400@2560.0.2560.1400" timestamp="1589751997970" />
+    <state x="3320" y="274" key="SettingsEditor" timestamp="1589649522490">
+      <screen x="2560" y="0" width="2560" height="1400" />
+    </state>
+    <state x="3320" y="274" key="SettingsEditor/0.0.2560.1400/2560.0.2560.1400@2560.0.2560.1400" timestamp="1589649522490" />
+    <state x="3536" y="523" key="com.intellij.ide.util.TipDialog" timestamp="1589789528548">
+      <screen x="2560" y="0" width="2560" height="1400" />
+    </state>
+    <state x="3536" y="523" key="com.intellij.ide.util.TipDialog/0.0.2560.1400/2560.0.2560.1400@2560.0.2560.1400" timestamp="1589789528548" />
+    <state x="197" y="40" width="1889" height="959" key="dock-window-1" timestamp="1589789622271">
+      <screen x="0" y="0" width="2560" height="1400" />
+    </state>
+    <state x="197" y="40" width="1889" height="959" key="dock-window-1/0.0.2560.1400/2560.0.2560.1400@2560.0.2560.1400" timestamp="1589789622271" />
+    <state x="3496" y="330" width="672" height="677" key="run.anything.popup" timestamp="1589789632786">
+      <screen x="2560" y="0" width="2560" height="1400" />
+    </state>
+    <state x="3496" y="330" width="672" height="677" key="run.anything.popup/0.0.2560.1400/2560.0.2560.1400@2560.0.2560.1400" timestamp="1589789632786" />
+    <state x="3503" y="315" width="672" height="678" key="search.everywhere.popup" timestamp="1589186319897">
+      <screen x="2560" y="0" width="2560" height="1400" />
+    </state>
+    <state x="3503" y="315" width="672" height="678" key="search.everywhere.popup/0.0.2560.1400/2560.0.2560.1400@2560.0.2560.1400" timestamp="1589186319897" />
+  </component>
+  <component name="XDebuggerManager">
+    <breakpoint-manager>
+      <breakpoints>
+        <line-breakpoint enabled="true" type="java-line">
+          <url>file://$PROJECT_DIR$/src/main/java/milestone/due/engine/WekaEngine.java</url>
+          <line>98</line>
+          <option name="timeStamp" value="32" />
+        </line-breakpoint>
+        <line-breakpoint enabled="true" type="java-line">
+          <url>file://$PROJECT_DIR$/src/main/java/milestone/due/engine/WekaEngine.java</url>
+          <line>99</line>
+          <option name="timeStamp" value="33" />
+        </line-breakpoint>
+        <line-breakpoint enabled="true" type="java-line">
+          <url>file://$PROJECT_DIR$/src/main/java/milestone/due/engine/WekaEngine.java</url>
+          <line>103</line>
+          <option name="timeStamp" value="34" />
+        </line-breakpoint>
+        <line-breakpoint enabled="true" type="java-line">
+          <url>file://$PROJECT_DIR$/src/main/java/milestone/due/engine/WekaEngine.java</url>
+          <line>104</line>
+          <option name="timeStamp" value="35" />
+        </line-breakpoint>
+        <line-breakpoint enabled="true" type="java-line">
+          <url>file://$PROJECT_DIR$/src/main/java/milestone/due/engine/WekaEngine.java</url>
+          <line>105</line>
+          <option name="timeStamp" value="36" />
+        </line-breakpoint>
+        <line-breakpoint enabled="true" type="java-line">
+          <url>file://$PROJECT_DIR$/src/main/java/milestone/due/engine/WekaEngine.java</url>
+          <line>110</line>
+          <option name="timeStamp" value="37" />
+        </line-breakpoint>
+        <line-breakpoint enabled="true" type="java-line">
+          <url>file://$PROJECT_DIR$/src/main/java/milestone/due/engine/WekaEngine.java</url>
+          <line>111</line>
+          <option name="timeStamp" value="38" />
+        </line-breakpoint>
+        <line-breakpoint enabled="true" type="java-line">
+          <url>file://$PROJECT_DIR$/src/main/java/milestone/due/engine/WekaEngine.java</url>
+          <line>112</line>
+          <option name="timeStamp" value="39" />
+        </line-breakpoint>
+        <line-breakpoint enabled="true" type="java-line">
+          <url>file://$PROJECT_DIR$/src/main/java/milestone/due/engine/WekaEngine.java</url>
+          <line>113</line>
+          <option name="timeStamp" value="40" />
+        </line-breakpoint>
+      </breakpoints>
+    </breakpoint-manager>
+  </component>
+</project>

@@ -1,0 +1,14 @@
+language: java
+
+jdk:
+  - openjdk8
+
+addons:
+  sonarcloud:
+    organization: 3aacfe8b5b095d54ca2128a4bc103641 ##Chiave generale
+    token: 8559ac72052977d837bf1e2dce40d17420f652b2 ##Chiave travis
+
+
+script:
+  # the following command line builds the project, runs the tests with coverage and then execute the SonarCloud analysis
+  - mvn clean org.jacoco:jacoco-maven-plugin:prepare-agent install sonar:sonar -Dsonar.projectKey=GlaAndry_D2M2
