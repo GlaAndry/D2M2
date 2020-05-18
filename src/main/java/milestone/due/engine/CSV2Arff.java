@@ -28,7 +28,7 @@ public class CSV2Arff {
     static String prefix = "";
     static String numRelease = "";
 
-    final String prfName = "\\M1D2";
+    static final String prfName = "\\M1D2";
 
 
     private static void importResources(int value) {

@@ -153,14 +153,14 @@ public class WekaEngine {
     }
 
     private void calculateNaiveBayes(ConverterUtils.DataSource train, ConverterUtils.DataSource test, int value, int counter, List<String[]> list) throws Exception {
+        Instances testing = test.getDataSet();
+        NaiveBayes classifier = new NaiveBayes();
 
         if (value == 0) {
-            Instances testing = test.getDataSet();
 
             int numAttr = testing.numAttributes();
             testing.setClassIndex(numAttr - 1);
 
-            NaiveBayes classifier = new NaiveBayes();
 
             classifier.buildClassifier(testing);
 
@@ -174,13 +174,11 @@ public class WekaEngine {
 
         if (value == 1) {
             Instances training = train.getDataSet();
-            Instances testing = test.getDataSet();
 
             int numAttr = training.numAttributes();
             training.setClassIndex(numAttr - 1);
             testing.setClassIndex(numAttr - 1);
 
-            NaiveBayes classifier = new NaiveBayes();
 
             classifier.buildClassifier(training);
 
@@ -196,16 +194,16 @@ public class WekaEngine {
     }
 
     private void calculateIBK(ConverterUtils.DataSource train, ConverterUtils.DataSource test, int value, int counter, List<String[]> list) throws Exception {
+        Instances testing = test.getDataSet();
+        IBk classifier = new IBk();
 
         if (value == 0) {
-            Instances testing = test.getDataSet();
 
 
             int numAttr = testing.numAttributes();
 
             testing.setClassIndex(numAttr - 1);
 
-            IBk classifier = new IBk();
 
             classifier.buildClassifier(testing);
 
@@ -220,13 +218,10 @@ public class WekaEngine {
 
         if (value == 1) {
             Instances training = train.getDataSet();
-            Instances testing = test.getDataSet();
 
             int numAttr = training.numAttributes();
             training.setClassIndex(numAttr - 1);
             testing.setClassIndex(numAttr - 1);
-
-            IBk classifier = new IBk();
 
             classifier.buildClassifier(training);
 
