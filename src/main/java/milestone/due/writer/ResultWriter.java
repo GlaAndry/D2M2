@@ -1,7 +1,6 @@
 package milestone.due.writer;
 
 import com.opencsv.CSVWriter;
-import milestone.due.engine.MakeARFFFile;
 import milestone.due.engine.WekaEngine;
 
 import java.io.FileInputStream;

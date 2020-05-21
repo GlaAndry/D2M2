@@ -1,17 +1,23 @@
 package milestone.due.engine;
 
+import com.opencsv.CSVReader;
 import com.opencsv.CSVWriter;
+import weka.attributeSelection.CfsSubsetEval;
+import weka.attributeSelection.GreedyStepwise;
 import weka.classifiers.bayes.NaiveBayes;
 import weka.classifiers.evaluation.Evaluation;
 import weka.classifiers.lazy.IBk;
+import weka.classifiers.meta.FilteredClassifier;
 import weka.classifiers.trees.RandomForest;
 import weka.core.Instances;
 import weka.core.converters.ConverterUtils;
+import weka.filters.Filter;
+import weka.filters.supervised.attribute.AttributeSelection;
+import weka.filters.supervised.instance.Resample;
+import weka.filters.supervised.instance.SMOTE;
+import weka.filters.supervised.instance.SpreadSubsample;
 
-import java.io.FileInputStream;
-import java.io.FileWriter;
-import java.io.IOException;
-import java.io.InputStream;
+import java.io.*;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Properties;
@@ -36,9 +42,14 @@ public class WekaEngine {
 
     static String m1d2Test = "";
     static String m1d2Train = "";
+    static String m1d2TestCSV = "";
+    static String m1d2TrainCSV = "";
     static String prefix = "";
     static String out = "";
     static String numRelease = "";
+
+    double defTrain = 0;
+    double defTest = 0;
 
     private static void importResources(int value) {
         /**
@@ -55,12 +66,16 @@ public class WekaEngine {
             if (value == 0) {
                 m1d2Test = prop.getProperty("BOOKARFFTESTING");
                 m1d2Train = prop.getProperty("BOOKARFFTRAINING");
+                m1d2TestCSV = prop.getProperty("M1D2TESTBOOK");
+                m1d2TrainCSV = prop.getProperty("M1D2TRAINBOOK");
                 prefix = prop.getProperty("prefixBOOK");
                 out = prop.getProperty("OUTBOOK");
                 numRelease = prop.getProperty("NUMBOOK");
             } else {
                 m1d2Test = prop.getProperty("TAJOARFFTESTING");
                 m1d2Train = prop.getProperty("TAJOARFFTRAINING");
+                m1d2TestCSV = prop.getProperty("M1D2TESTTAJO");
+                m1d2TrainCSV = prop.getProperty("M1D2TRAINTAJO");
                 prefix = prop.getProperty("prefixTAJO");
                 out = prop.getProperty("OUTTAJO");
                 numRelease = prop.getProperty("NUMTAJO");
@@ -83,155 +98,911 @@ public class WekaEngine {
          */
         String tst = "";
         String trn = "";
-        int lock = 0;
+        String tstCSV = "";
+        String trnCSV = "";
+
+        //int lock = 0;
 
         List<String[]> ret = new ArrayList<>();
-        ret.add(new String[]{"Dataset", "#TrainingRelease", "Classifier", "Precision", "Recall", "AUC", "Kappa"});
+        ret.add(new String[]{"Dataset", "#TrainingRelease", "%Training", "%DefectiveInTraining", "%DefectiveInTesting", "Classifier", "Balancing",
+                "Feature Selection", "TruePositive", "FalsePositive", "TrueNegative", "FalseNegative", "Precision", "Recall", "AUC", "Kappa"});
 
-        for (int i = 1; i <= numOfSteps - 1; i++) {
+        for (int i = 2; i < numOfSteps ; i++) {
             tst = m1d2Test + "\\M1D2" + prefix + i + "testing.arff";
             trn = m1d2Train + "\\M1D2" + prefix + i + "training.arff";
+            tstCSV = m1d2TestCSV + "\\M1D2" + prefix + i + "testing.csv";
+            trnCSV = m1d2TrainCSV + "\\M1D2" + prefix + i + "training.csv";
             ConverterUtils.DataSource ts = new ConverterUtils.DataSource(tst);
-            if (lock == 0) {
+            ConverterUtils.DataSource tr = new ConverterUtils.DataSource(trn);
 
-                new WekaEngine().calculateRandomForest(null, ts, 0, i, ret);
-                new WekaEngine().calculateNaiveBayes(null, ts, 0, i, ret);
-                new WekaEngine().calculateIBK(null, ts, 0, i, ret);
+            new WekaEngine().calculateRandomForestNoSampling(tr, ts, i, ret, tstCSV, trnCSV);
+            new WekaEngine().calculateRandomForestUndersampling(tr, ts, i, ret, tstCSV, trnCSV);
+            new WekaEngine().calculateRandomForestOversampling(tr, ts, i, ret, tstCSV, trnCSV);
+            new WekaEngine().calculateRandomForestSMOTE(tr, ts, i, ret, tstCSV, trnCSV);
 
-            } else {
+            new WekaEngine().calculateNaiveBayesNoSampling(tr, ts, i, ret, tstCSV, trnCSV);
+            new WekaEngine().calculateNaiveBayesUndersampling(tr, ts, i, ret, tstCSV, trnCSV);
+            new WekaEngine().calculateNaiveBayesOversampling(tr, ts, i, ret, tstCSV, trnCSV);
+            new WekaEngine().calculateNaiveBayesSMOTE(tr, ts, i, ret, tstCSV, trnCSV);
 
-                ConverterUtils.DataSource tr = new ConverterUtils.DataSource(trn);
-                new WekaEngine().calculateRandomForest(tr, ts, 1, i, ret);
-                new WekaEngine().calculateNaiveBayes(tr, ts, 1, i, ret);
-                new WekaEngine().calculateIBK(tr, ts, 1, i, ret);
 
-            }
-            lock = 1;
+            new WekaEngine().calculateIBKNoSampling(tr, ts, i, ret, tstCSV, trnCSV);
+            new WekaEngine().calculateIBKUndersampling(tr, ts, i, ret, tstCSV, trnCSV);
+            new WekaEngine().calculateIBKOversampling(tr, ts, i, ret, tstCSV, trnCSV);
+            new WekaEngine().calculateIBKSMOTE(tr, ts, i, ret, tstCSV, trnCSV);
+
 
         }
 
         return ret;
     }
 
-    private void calculateRandomForest(ConverterUtils.DataSource train, ConverterUtils.DataSource test, int value, int counter, List<String[]> list) throws Exception {
-        /**
-         * Value va a determinare se è solo l'istanza di training o anche testing.
-         */
+
+    private void calculateRandomForestNoSampling(ConverterUtils.DataSource train, ConverterUtils.DataSource test, int counter, List<String[]> list, String csvTest, String csvTrain) throws Exception {
+
+        //No Filter///////////
 
         Instances testing = test.getDataSet();
         RandomForest classifier = new RandomForest();
+        Instances training = train.getDataSet();
 
-        if (value == 0) {
+        int numAttr = training.numAttributes();
+        training.setClassIndex(numAttr - 1);
+        testing.setClassIndex(numAttr - 1);
 
-            int numAttr = testing.numAttributes();
-            testing.setClassIndex(numAttr - 1);
-            classifier.buildClassifier(testing);
+        classifier.buildClassifier(training);
+        Evaluation eval = new Evaluation(testing);
 
-            Evaluation eval = new Evaluation(testing);
-            eval.evaluateModel(classifier, testing);
+        eval.evaluateModel(classifier, testing);
 
-            list.add(new String[]{prefix, Integer.toString(counter), "Random Forest", Double.toString(eval.precision(1)),
-                    Double.toString(eval.recall(1)), Double.toString(eval.areaUnderROC(1)), Double.toString(eval.kappa())});
+        try (FileReader fileReader = new FileReader(csvTest);
+             FileReader fileReader1 = new FileReader(csvTrain);
+             CSVReader csvReader = new CSVReader(fileReader);
+             CSVReader csvReader1 = new CSVReader(fileReader1)) {
+
+            defTrain = new WekaEngine().numberOfYesPercentage(csvReader1, numAttr - 1, "YES");
+            defTest = new WekaEngine().numberOfYesPercentage(csvReader, numAttr - 1, "YES");
+
         }
 
-        if (value == 1) {
-            Instances training = train.getDataSet();
+        list.add(new String[]{prefix, Integer.toString(counter), Double.toString(counter / Double.parseDouble(numRelease) * 100), String.valueOf(defTrain), String.valueOf(defTest),
+                "Random Forest", "No Sampling", "No Selection", String.valueOf(eval.truePositiveRate(1)),
+                String.valueOf(eval.falsePositiveRate(1)), String.valueOf(eval.trueNegativeRate(1)), String.valueOf(eval.falseNegativeRate(1)), Double.toString(eval.precision(1)),
+                Double.toString(eval.recall(1)), Double.toString(eval.areaUnderROC(1)), Double.toString(eval.kappa())});
 
-            int numAttr = training.numAttributes();
-            training.setClassIndex(numAttr - 1);
-            testing.setClassIndex(numAttr - 1);
 
-            classifier.buildClassifier(training);
-            Evaluation eval = new Evaluation(testing);
+        //Filter
 
-            eval.evaluateModel(classifier, testing);
+        AttributeSelection filter = new AttributeSelection();
+        CfsSubsetEval evalFilter = new CfsSubsetEval();
+        GreedyStepwise search = new GreedyStepwise();
+        //set the algorithm to search backward
+        search.setSearchBackwards(true);
+        //set the filter to use the evaluator and search algorithm
+        filter.setEvaluator(evalFilter);
+        filter.setSearch(search);
+        //specify the dataset
+        filter.setInputFormat(training);
+        //apply
+        Instances filteredTraining = Filter.useFilter(training, filter);
 
-            list.add(new String[]{prefix, Integer.toString(counter), "Random Forest", Double.toString(eval.precision(1)),
-                    Double.toString(eval.recall(1)), Double.toString(eval.areaUnderROC(1)), Double.toString(eval.kappa())});
-        }
+        int numAttrFiltered = filteredTraining.numAttributes();
+        //evaluation with filtered
+        filteredTraining.setClassIndex(numAttrFiltered - 1);
+        Instances testingFiltered = Filter.useFilter(testing, filter);
+        testingFiltered.setClassIndex(numAttrFiltered - 1);
+        classifier.buildClassifier(filteredTraining);
+        eval.evaluateModel(classifier, testingFiltered);
+
+        list.add(new String[]{prefix, Integer.toString(counter), Double.toString(counter / Double.parseDouble(numRelease) * 100), String.valueOf(defTrain), String.valueOf(defTest),
+                "Random Forest", "No Sampling", "Best First", String.valueOf(eval.truePositiveRate(1)),
+                String.valueOf(eval.falsePositiveRate(1)), String.valueOf(eval.trueNegativeRate(1)), String.valueOf(eval.falseNegativeRate(1)), Double.toString(eval.precision(1)),
+                Double.toString(eval.recall(1)), Double.toString(eval.areaUnderROC(1)), Double.toString(eval.kappa())});
+
 
     }
 
-    private void calculateNaiveBayes(ConverterUtils.DataSource train, ConverterUtils.DataSource test, int value, int counter, List<String[]> list) throws Exception {
+    private void calculateRandomForestUndersampling(ConverterUtils.DataSource train, ConverterUtils.DataSource test, int counter, List<String[]> list, String csvTest, String csvTrain) throws Exception {
+
+        //No Filter///////////
+
+        Instances testing = test.getDataSet();
+        RandomForest classifier = new RandomForest();
+        Instances training = train.getDataSet();
+
+        int numAttr = training.numAttributes();
+        training.setClassIndex(numAttr - 1);
+        testing.setClassIndex(numAttr - 1);
+
+        classifier.buildClassifier(training);
+
+        Resample resample = new Resample();
+        resample.setInputFormat(training);
+        FilteredClassifier fc = new FilteredClassifier();
+
+        fc.setClassifier(classifier);
+
+        SpreadSubsample spreadSubsample = new SpreadSubsample();
+        String[] opts = new String[]{"-M", "1.0"};
+        spreadSubsample.setOptions(opts);
+        fc.setFilter(spreadSubsample);
+
+        fc.buildClassifier(training);
+        Evaluation eval = new Evaluation(testing);
+        eval.evaluateModel(fc, testing); //sampled
+
+        try (FileReader fileReader = new FileReader(csvTest);
+             FileReader fileReader1 = new FileReader(csvTrain);
+             CSVReader csvReader = new CSVReader(fileReader);
+             CSVReader csvReader1 = new CSVReader(fileReader1)) {
+
+            defTrain = new WekaEngine().numberOfYesPercentage(csvReader1, numAttr - 1, "YES");
+            defTest = new WekaEngine().numberOfYesPercentage(csvReader, numAttr - 1, "YES");
+
+        }
+
+        list.add(new String[]{prefix, Integer.toString(counter), Double.toString(counter / Double.parseDouble(numRelease) * 100), String.valueOf(defTrain), String.valueOf(defTest),
+                "Random Forest", "Undersampling", "No Selection", String.valueOf(eval.truePositiveRate(1)),
+                String.valueOf(eval.falsePositiveRate(1)), String.valueOf(eval.trueNegativeRate(1)), String.valueOf(eval.falseNegativeRate(1)), Double.toString(eval.precision(1)),
+                Double.toString(eval.recall(1)), Double.toString(eval.areaUnderROC(1)), Double.toString(eval.kappa())});
+
+
+        //Filter
+
+        AttributeSelection filter = new AttributeSelection();
+        CfsSubsetEval evalFilter = new CfsSubsetEval();
+        GreedyStepwise search = new GreedyStepwise();
+        //set the algorithm to search backward
+        search.setSearchBackwards(true);
+        //set the filter to use the evaluator and search algorithm
+        filter.setEvaluator(evalFilter);
+        filter.setSearch(search);
+        //specify the dataset
+        filter.setInputFormat(training);
+        //apply
+        Instances filteredTraining = Filter.useFilter(training, filter);
+
+        int numAttrFiltered = filteredTraining.numAttributes();
+        //evaluation with filtered
+        filteredTraining.setClassIndex(numAttrFiltered - 1);
+        Instances testingFiltered = Filter.useFilter(testing, filter);
+        testingFiltered.setClassIndex(numAttrFiltered - 1);
+        classifier.buildClassifier(filteredTraining);
+        eval.evaluateModel(classifier, testingFiltered);
+
+        list.add(new String[]{prefix, Integer.toString(counter), Double.toString(counter / Double.parseDouble(numRelease) * 100), String.valueOf(defTrain), String.valueOf(defTest),
+                "Random Forest", "Undersampling", "Best First", String.valueOf(eval.truePositiveRate(1)),
+                String.valueOf(eval.falsePositiveRate(1)), String.valueOf(eval.trueNegativeRate(1)), String.valueOf(eval.falseNegativeRate(1)), Double.toString(eval.precision(1)),
+                Double.toString(eval.recall(1)), Double.toString(eval.areaUnderROC(1)), Double.toString(eval.kappa())});
+
+
+    }
+
+    private void calculateRandomForestOversampling(ConverterUtils.DataSource train, ConverterUtils.DataSource test, int counter, List<String[]> list, String csvTest, String csvTrain) throws Exception {
+
+        //No Filter///////////
+
+        Instances testing = test.getDataSet();
+        RandomForest classifier = new RandomForest();
+        Instances training = train.getDataSet();
+
+        int numAttr = training.numAttributes();
+        training.setClassIndex(numAttr - 1);
+        testing.setClassIndex(numAttr - 1);
+
+        classifier.buildClassifier(training);
+
+        Resample resample = new Resample();
+        resample.setInputFormat(training);
+        FilteredClassifier fc = new FilteredClassifier();
+
+        fc.setClassifier(classifier);
+
+
+        double percentage = (1 - (2 * (counter / (double) numAttr))) * 100;
+
+        String[] opts = new String[]{"-B", "1.0", "-Z", String.valueOf(percentage)};
+        resample.setOptions(opts);
+        fc.setFilter(resample);
+
+        fc.buildClassifier(training);
+        Evaluation eval = new Evaluation(testing);
+        eval.evaluateModel(fc, testing); //sampled
+
+        try (FileReader fileReader = new FileReader(csvTest);
+             FileReader fileReader1 = new FileReader(csvTrain);
+             CSVReader csvReader = new CSVReader(fileReader);
+             CSVReader csvReader1 = new CSVReader(fileReader1)) {
+
+            defTrain = new WekaEngine().numberOfYesPercentage(csvReader1, numAttr - 1, "YES");
+            defTest = new WekaEngine().numberOfYesPercentage(csvReader, numAttr - 1, "YES");
+
+        }
+
+        list.add(new String[]{prefix, Integer.toString(counter), Double.toString(counter / Double.parseDouble(numRelease) * 100), String.valueOf(defTrain), String.valueOf(defTest),
+                "Random Forest", "Oversampling", "No Selection", String.valueOf(eval.truePositiveRate(1)),
+                String.valueOf(eval.falsePositiveRate(1)), String.valueOf(eval.trueNegativeRate(1)), String.valueOf(eval.falseNegativeRate(1)), Double.toString(eval.precision(1)),
+                Double.toString(eval.recall(1)), Double.toString(eval.areaUnderROC(1)), Double.toString(eval.kappa())});
+
+
+        //Filter
+
+        AttributeSelection filter = new AttributeSelection();
+        CfsSubsetEval evalFilter = new CfsSubsetEval();
+        GreedyStepwise search = new GreedyStepwise();
+        //set the algorithm to search backward
+        search.setSearchBackwards(true);
+        //set the filter to use the evaluator and search algorithm
+        filter.setEvaluator(evalFilter);
+        filter.setSearch(search);
+        //specify the dataset
+        filter.setInputFormat(training);
+        //apply
+        Instances filteredTraining = Filter.useFilter(training, filter);
+
+        int numAttrFiltered = filteredTraining.numAttributes();
+        //evaluation with filtered
+        filteredTraining.setClassIndex(numAttrFiltered - 1);
+        Instances testingFiltered = Filter.useFilter(testing, filter);
+        testingFiltered.setClassIndex(numAttrFiltered - 1);
+        classifier.buildClassifier(filteredTraining);
+        eval.evaluateModel(classifier, testingFiltered);
+
+        list.add(new String[]{prefix, Integer.toString(counter), Double.toString(counter / Double.parseDouble(numRelease) * 100), String.valueOf(defTrain), String.valueOf(defTest),
+                "Random Forest", "Oversampling", "Best First", String.valueOf(eval.truePositiveRate(1)),
+                String.valueOf(eval.falsePositiveRate(1)), String.valueOf(eval.trueNegativeRate(1)), String.valueOf(eval.falseNegativeRate(1)), Double.toString(eval.precision(1)),
+                Double.toString(eval.recall(1)), Double.toString(eval.areaUnderROC(1)), Double.toString(eval.kappa())});
+
+
+    }
+
+
+    private void calculateRandomForestSMOTE(ConverterUtils.DataSource train, ConverterUtils.DataSource test, int counter, List<String[]> list, String csvTest, String csvTrain) throws Exception {
+
+        //No Filter///////////
+        RandomForest classifier = new RandomForest();
+
+        Instances testing = test.getDataSet();
+        Instances training = train.getDataSet();
+
+        int numAttr = training.numAttributes();
+        training.setClassIndex(numAttr - 1);
+        testing.setClassIndex(numAttr - 1);
+
+
+        Resample resample = new Resample();
+        resample.setInputFormat(training);
+        FilteredClassifier fc = new FilteredClassifier();
+
+        SMOTE smote = new SMOTE();
+        smote.setInputFormat(training);
+        fc.setFilter(smote);
+        fc.setClassifier(classifier);
+
+        fc.buildClassifier(training);
+
+        Evaluation eval = new Evaluation(testing);
+        eval.evaluateModel(fc, testing); //sampled
+
+        try (FileReader fileReader = new FileReader(csvTest);
+             FileReader fileReader1 = new FileReader(csvTrain);
+             CSVReader csvReader = new CSVReader(fileReader);
+             CSVReader csvReader1 = new CSVReader(fileReader1)) {
+
+            defTrain = new WekaEngine().numberOfYesPercentage(csvReader1, numAttr - 1, "YES");
+            defTest = new WekaEngine().numberOfYesPercentage(csvReader, numAttr - 1, "YES");
+
+        }
+
+        list.add(new String[]{prefix, Integer.toString(counter), Double.toString(counter / Double.parseDouble(numRelease) * 100), String.valueOf(defTrain), String.valueOf(defTest),
+                "Random Forest", "SMOTE", "No Selection", String.valueOf(eval.truePositiveRate(1)),
+                String.valueOf(eval.falsePositiveRate(1)), String.valueOf(eval.trueNegativeRate(1)), String.valueOf(eval.falseNegativeRate(1)), Double.toString(eval.precision(1)),
+                Double.toString(eval.recall(1)), Double.toString(eval.areaUnderROC(1)), Double.toString(eval.kappa())});
+
+
+        //Filter
+
+        AttributeSelection filter = new AttributeSelection();
+        CfsSubsetEval evalFilter = new CfsSubsetEval();
+        GreedyStepwise search = new GreedyStepwise();
+        //set the algorithm to search backward
+        search.setSearchBackwards(true);
+        //set the filter to use the evaluator and search algorithm
+        filter.setEvaluator(evalFilter);
+        filter.setSearch(search);
+        //specify the dataset
+        filter.setInputFormat(training);
+        //apply
+        Instances filteredTraining = Filter.useFilter(training, filter);
+
+        int numAttrFiltered = filteredTraining.numAttributes();
+        //evaluation with filtered
+        filteredTraining.setClassIndex(numAttrFiltered - 1);
+        Instances testingFiltered = Filter.useFilter(testing, filter);
+        testingFiltered.setClassIndex(numAttrFiltered - 1);
+        classifier.buildClassifier(filteredTraining);
+        eval.evaluateModel(classifier, testingFiltered);
+
+        list.add(new String[]{prefix, Integer.toString(counter), Double.toString(counter / Double.parseDouble(numRelease) * 100), String.valueOf(defTrain), String.valueOf(defTest),
+                "Random Forest", "SMOTE", "Best First", String.valueOf(eval.truePositiveRate(1)),
+                String.valueOf(eval.falsePositiveRate(1)), String.valueOf(eval.trueNegativeRate(1)), String.valueOf(eval.falseNegativeRate(1)), Double.toString(eval.precision(1)),
+                Double.toString(eval.recall(1)), Double.toString(eval.areaUnderROC(1)), Double.toString(eval.kappa())});
+
+
+    }
+
+
+    private void calculateNaiveBayesNoSampling(ConverterUtils.DataSource train, ConverterUtils.DataSource test, int counter, List<String[]> list, String csvTest, String csvTrain) throws Exception {
+
+
         Instances testing = test.getDataSet();
         NaiveBayes classifier = new NaiveBayes();
+        Instances training = train.getDataSet();
 
-        if (value == 0) {
+        int numAttr = training.numAttributes();
+        training.setClassIndex(numAttr - 1);
+        testing.setClassIndex(numAttr - 1);
 
-            int numAttr = testing.numAttributes();
-            testing.setClassIndex(numAttr - 1);
+        classifier.buildClassifier(training);
 
+        Evaluation eval = new Evaluation(testing);
 
-            classifier.buildClassifier(testing);
+        eval.evaluateModel(classifier, testing);
 
-            Evaluation eval = new Evaluation(testing);
+        try (FileReader fileReader = new FileReader(csvTest);
+             FileReader fileReader1 = new FileReader(csvTrain);
+             CSVReader csvReader = new CSVReader(fileReader);
+             CSVReader csvReader1 = new CSVReader(fileReader1)) {
 
-            eval.evaluateModel(classifier, testing);
+            defTrain = new WekaEngine().numberOfYesPercentage(csvReader1, numAttr - 1, "YES");
+            defTest = new WekaEngine().numberOfYesPercentage(csvReader, numAttr - 1, "YES");
 
-            list.add(new String[]{prefix, Integer.toString(counter), "Naive Bayes", Double.toString(eval.precision(1)),
-                    Double.toString(eval.recall(1)), Double.toString(eval.areaUnderROC(1)), Double.toString(eval.kappa())});
         }
 
-        if (value == 1) {
-            Instances training = train.getDataSet();
+        list.add(new String[]{prefix, Integer.toString(counter), Double.toString(counter / Double.parseDouble(numRelease) * 100), String.valueOf(defTrain), String.valueOf(defTest),
+                "Naive Bayes", "No Sampling", "No Selection", String.valueOf(eval.truePositiveRate(1)),
+                String.valueOf(eval.falsePositiveRate(1)), String.valueOf(eval.trueNegativeRate(1)), String.valueOf(eval.falseNegativeRate(1)), Double.toString(eval.precision(1)),
+                Double.toString(eval.recall(1)), Double.toString(eval.areaUnderROC(1)), Double.toString(eval.kappa())});
 
-            int numAttr = training.numAttributes();
-            training.setClassIndex(numAttr - 1);
-            testing.setClassIndex(numAttr - 1);
+        AttributeSelection filter = new AttributeSelection();
+        CfsSubsetEval evalFilter = new CfsSubsetEval();
+        GreedyStepwise search = new GreedyStepwise();
+        //set the algorithm to search backward
+        search.setSearchBackwards(true);
+        //set the filter to use the evaluator and search algorithm
+        filter.setEvaluator(evalFilter);
+        filter.setSearch(search);
+        //specify the dataset
+        filter.setInputFormat(training);
+        //apply
+        Instances filteredTraining = Filter.useFilter(training, filter);
 
+        int numAttrFiltered = filteredTraining.numAttributes();
+        //evaluation with filtered
+        filteredTraining.setClassIndex(numAttrFiltered - 1);
+        Instances testingFiltered = Filter.useFilter(testing, filter);
+        testingFiltered.setClassIndex(numAttrFiltered - 1);
+        classifier.buildClassifier(filteredTraining);
+        eval.evaluateModel(classifier, testingFiltered);
 
-            classifier.buildClassifier(training);
+        list.add(new String[]{prefix, Integer.toString(counter), Double.toString(counter / Double.parseDouble(numRelease) * 100), String.valueOf(defTrain), String.valueOf(defTest),
+                "Naive Bayes", "No Sampling", "Best First", String.valueOf(eval.truePositiveRate(1)),
+                String.valueOf(eval.falsePositiveRate(1)), String.valueOf(eval.trueNegativeRate(1)), String.valueOf(eval.falseNegativeRate(1)), Double.toString(eval.precision(1)),
+                Double.toString(eval.recall(1)), Double.toString(eval.areaUnderROC(1)), Double.toString(eval.kappa())});
 
-
-            Evaluation eval = new Evaluation(testing);
-
-            eval.evaluateModel(classifier, testing);
-
-            list.add(new String[]{prefix, Integer.toString(counter), "Naive Bayes", Double.toString(eval.precision(1)),
-                    Double.toString(eval.recall(1)), Double.toString(eval.areaUnderROC(1)), Double.toString(eval.kappa())});
-        }
 
     }
 
-    private void calculateIBK(ConverterUtils.DataSource train, ConverterUtils.DataSource test, int value, int counter, List<String[]> list) throws Exception {
+    private void calculateNaiveBayesUndersampling(ConverterUtils.DataSource train, ConverterUtils.DataSource test, int counter, List<String[]> list, String csvTest, String csvTrain) throws Exception {
+
+
+        Instances testing = test.getDataSet();
+        NaiveBayes classifier = new NaiveBayes();
+        Instances training = train.getDataSet();
+
+        int numAttr = training.numAttributes();
+        training.setClassIndex(numAttr - 1);
+        testing.setClassIndex(numAttr - 1);
+
+        classifier.buildClassifier(training);
+
+        Resample resample = new Resample();
+        resample.setInputFormat(training);
+        FilteredClassifier fc = new FilteredClassifier();
+
+        fc.setClassifier(classifier);
+
+        SpreadSubsample spreadSubsample = new SpreadSubsample();
+        String[] opts = new String[]{"-M", "1.0"};
+        spreadSubsample.setOptions(opts);
+        fc.setFilter(spreadSubsample);
+
+        fc.buildClassifier(training);
+        Evaluation eval = new Evaluation(testing);
+        eval.evaluateModel(fc, testing); //sampled
+
+        try (FileReader fileReader = new FileReader(csvTest);
+             FileReader fileReader1 = new FileReader(csvTrain);
+             CSVReader csvReader = new CSVReader(fileReader);
+             CSVReader csvReader1 = new CSVReader(fileReader1)) {
+
+            defTrain = new WekaEngine().numberOfYesPercentage(csvReader1, numAttr - 1, "YES");
+            defTest = new WekaEngine().numberOfYesPercentage(csvReader, numAttr - 1, "YES");
+
+        }
+
+        list.add(new String[]{prefix, Integer.toString(counter), Double.toString(counter / Double.parseDouble(numRelease) * 100), String.valueOf(defTrain), String.valueOf(defTest),
+                "Naive Bayes", "UnderSampling", "No Selection", String.valueOf(eval.truePositiveRate(1)),
+                String.valueOf(eval.falsePositiveRate(1)), String.valueOf(eval.trueNegativeRate(1)), String.valueOf(eval.falseNegativeRate(1)), Double.toString(eval.precision(1)),
+                Double.toString(eval.recall(1)), Double.toString(eval.areaUnderROC(1)), Double.toString(eval.kappa())});
+
+        AttributeSelection filter = new AttributeSelection();
+        CfsSubsetEval evalFilter = new CfsSubsetEval();
+        GreedyStepwise search = new GreedyStepwise();
+        //set the algorithm to search backward
+        search.setSearchBackwards(true);
+        //set the filter to use the evaluator and search algorithm
+        filter.setEvaluator(evalFilter);
+        filter.setSearch(search);
+        //specify the dataset
+        filter.setInputFormat(training);
+        //apply
+        Instances filteredTraining = Filter.useFilter(training, filter);
+
+        int numAttrFiltered = filteredTraining.numAttributes();
+        //evaluation with filtered
+        filteredTraining.setClassIndex(numAttrFiltered - 1);
+        Instances testingFiltered = Filter.useFilter(testing, filter);
+        testingFiltered.setClassIndex(numAttrFiltered - 1);
+        classifier.buildClassifier(filteredTraining);
+        eval.evaluateModel(classifier, testingFiltered);
+
+        list.add(new String[]{prefix, Integer.toString(counter), Double.toString(counter / Double.parseDouble(numRelease) * 100), String.valueOf(defTrain), String.valueOf(defTest),
+                "Naive Bayes", "Undersampling", "Best First", String.valueOf(eval.truePositiveRate(1)),
+                String.valueOf(eval.falsePositiveRate(1)), String.valueOf(eval.trueNegativeRate(1)), String.valueOf(eval.falseNegativeRate(1)), Double.toString(eval.precision(1)),
+                Double.toString(eval.recall(1)), Double.toString(eval.areaUnderROC(1)), Double.toString(eval.kappa())});
+
+
+    }
+
+    private void calculateNaiveBayesOversampling(ConverterUtils.DataSource train, ConverterUtils.DataSource test, int counter, List<String[]> list, String csvTest, String csvTrain) throws Exception {
+
+
+        Instances testing = test.getDataSet();
+        NaiveBayes classifier = new NaiveBayes();
+        Instances training = train.getDataSet();
+
+        int numAttr = training.numAttributes();
+        training.setClassIndex(numAttr - 1);
+        testing.setClassIndex(numAttr - 1);
+
+        classifier.buildClassifier(training);
+
+        Resample resample = new Resample();
+        resample.setInputFormat(training);
+        FilteredClassifier fc = new FilteredClassifier();
+
+        fc.setClassifier(classifier);
+
+        double percentage = (1 - (2 * (counter / (double) numAttr))) * 100;
+
+        String[] opts = new String[]{"-B", "1.0", "-Z", String.valueOf(percentage)};
+        resample.setOptions(opts);
+        fc.setFilter(resample);
+
+        fc.buildClassifier(training);
+        Evaluation eval = new Evaluation(testing);
+        eval.evaluateModel(fc, testing); //sampled
+
+        try (FileReader fileReader = new FileReader(csvTest);
+             FileReader fileReader1 = new FileReader(csvTrain);
+             CSVReader csvReader = new CSVReader(fileReader);
+             CSVReader csvReader1 = new CSVReader(fileReader1)) {
+
+            defTrain = new WekaEngine().numberOfYesPercentage(csvReader1, numAttr - 1, "YES");
+            defTest = new WekaEngine().numberOfYesPercentage(csvReader, numAttr - 1, "YES");
+
+        }
+
+        list.add(new String[]{prefix, Integer.toString(counter), Double.toString(counter / Double.parseDouble(numRelease) * 100), String.valueOf(defTrain), String.valueOf(defTest),
+                "Naive Bayes", "Oversampling", "No Selection", String.valueOf(eval.truePositiveRate(1)),
+                String.valueOf(eval.falsePositiveRate(1)), String.valueOf(eval.trueNegativeRate(1)), String.valueOf(eval.falseNegativeRate(1)), Double.toString(eval.precision(1)),
+                Double.toString(eval.recall(1)), Double.toString(eval.areaUnderROC(1)), Double.toString(eval.kappa())});
+
+        AttributeSelection filter = new AttributeSelection();
+        CfsSubsetEval evalFilter = new CfsSubsetEval();
+        GreedyStepwise search = new GreedyStepwise();
+        //set the algorithm to search backward
+        search.setSearchBackwards(true);
+        //set the filter to use the evaluator and search algorithm
+        filter.setEvaluator(evalFilter);
+        filter.setSearch(search);
+        //specify the dataset
+        filter.setInputFormat(training);
+        //apply
+        Instances filteredTraining = Filter.useFilter(training, filter);
+
+        int numAttrFiltered = filteredTraining.numAttributes();
+        //evaluation with filtered
+        filteredTraining.setClassIndex(numAttrFiltered - 1);
+        Instances testingFiltered = Filter.useFilter(testing, filter);
+        testingFiltered.setClassIndex(numAttrFiltered - 1);
+        classifier.buildClassifier(filteredTraining);
+        eval.evaluateModel(classifier, testingFiltered);
+
+        list.add(new String[]{prefix, Integer.toString(counter), Double.toString(counter / Double.parseDouble(numRelease) * 100), String.valueOf(defTrain), String.valueOf(defTest),
+                "Naive Bayes", "Oversampling", "Best First", String.valueOf(eval.truePositiveRate(1)),
+                String.valueOf(eval.falsePositiveRate(1)), String.valueOf(eval.trueNegativeRate(1)), String.valueOf(eval.falseNegativeRate(1)), Double.toString(eval.precision(1)),
+                Double.toString(eval.recall(1)), Double.toString(eval.areaUnderROC(1)), Double.toString(eval.kappa())});
+
+
+    }
+
+    private void calculateNaiveBayesSMOTE(ConverterUtils.DataSource train, ConverterUtils.DataSource test, int counter, List<String[]> list, String csvTest, String csvTrain) throws Exception {
+
+        NaiveBayes classifier = new NaiveBayes();
+        Instances testing = test.getDataSet();
+        Instances training = train.getDataSet();
+
+        int numAttr = training.numAttributes();
+        training.setClassIndex(numAttr - 1);
+        testing.setClassIndex(numAttr - 1);
+
+
+        Resample resample = new Resample();
+        resample.setInputFormat(training);
+        FilteredClassifier fc = new FilteredClassifier();
+
+        SMOTE smote = new SMOTE();
+        smote.setInputFormat(training);
+        fc.setFilter(smote);
+        fc.setClassifier(classifier);
+
+        fc.buildClassifier(training);
+
+        Evaluation eval = new Evaluation(testing);
+        eval.evaluateModel(fc, testing); //sampled
+
+
+        try (FileReader fileReader = new FileReader(csvTest);
+             FileReader fileReader1 = new FileReader(csvTrain);
+             CSVReader csvReader = new CSVReader(fileReader);
+             CSVReader csvReader1 = new CSVReader(fileReader1)) {
+
+            defTrain = new WekaEngine().numberOfYesPercentage(csvReader1, numAttr - 1, "YES");
+            defTest = new WekaEngine().numberOfYesPercentage(csvReader, numAttr - 1, "YES");
+
+        }
+
+        list.add(new String[]{prefix, Integer.toString(counter), Double.toString(counter / Double.parseDouble(numRelease) * 100), String.valueOf(defTrain), String.valueOf(defTest),
+                "Naive Bayes", "SMOTE", "No Selection", String.valueOf(eval.truePositiveRate(1)),
+                String.valueOf(eval.falsePositiveRate(1)), String.valueOf(eval.trueNegativeRate(1)), String.valueOf(eval.falseNegativeRate(1)), Double.toString(eval.precision(1)),
+                Double.toString(eval.recall(1)), Double.toString(eval.areaUnderROC(1)), Double.toString(eval.kappa())});
+
+        AttributeSelection filter = new AttributeSelection();
+        CfsSubsetEval evalFilter = new CfsSubsetEval();
+        GreedyStepwise search = new GreedyStepwise();
+        //set the algorithm to search backward
+        search.setSearchBackwards(true);
+        //set the filter to use the evaluator and search algorithm
+        filter.setEvaluator(evalFilter);
+        filter.setSearch(search);
+        //specify the dataset
+        filter.setInputFormat(training);
+        //apply
+        Instances filteredTraining = Filter.useFilter(training, filter);
+
+        int numAttrFiltered = filteredTraining.numAttributes();
+        //evaluation with filtered
+        filteredTraining.setClassIndex(numAttrFiltered - 1);
+        Instances testingFiltered = Filter.useFilter(testing, filter);
+        testingFiltered.setClassIndex(numAttrFiltered - 1);
+        classifier.buildClassifier(filteredTraining);
+        eval.evaluateModel(classifier, testingFiltered);
+
+        list.add(new String[]{prefix, Integer.toString(counter), Double.toString(counter / Double.parseDouble(numRelease) * 100), String.valueOf(defTrain), String.valueOf(defTest),
+                "Naive Bayes", "SMOTE", "Best First", String.valueOf(eval.truePositiveRate(1)),
+                String.valueOf(eval.falsePositiveRate(1)), String.valueOf(eval.trueNegativeRate(1)), String.valueOf(eval.falseNegativeRate(1)), Double.toString(eval.precision(1)),
+                Double.toString(eval.recall(1)), Double.toString(eval.areaUnderROC(1)), Double.toString(eval.kappa())});
+
+
+    }
+
+
+    private void calculateIBKNoSampling(ConverterUtils.DataSource train, ConverterUtils.DataSource test, int counter, List<String[]> list, String csvTest, String csvTrain) throws Exception {
+
         Instances testing = test.getDataSet();
         IBk classifier = new IBk();
+        Instances training = train.getDataSet();
 
-        if (value == 0) {
+        int numAttr = training.numAttributes();
+        training.setClassIndex(numAttr - 1);
+        testing.setClassIndex(numAttr - 1);
 
+        classifier.buildClassifier(training);
 
-            int numAttr = testing.numAttributes();
+        Evaluation eval = new Evaluation(testing);
 
-            testing.setClassIndex(numAttr - 1);
+        eval.evaluateModel(classifier, testing);
 
+        try (FileReader fileReader = new FileReader(csvTest);
+             FileReader fileReader1 = new FileReader(csvTrain);
+             CSVReader csvReader = new CSVReader(fileReader);
+             CSVReader csvReader1 = new CSVReader(fileReader1)) {
 
-            classifier.buildClassifier(testing);
+            defTrain = new WekaEngine().numberOfYesPercentage(csvReader1, numAttr - 1, "YES");
+            defTest = new WekaEngine().numberOfYesPercentage(csvReader, numAttr - 1, "YES");
 
-            Evaluation eval = new Evaluation(testing);
-
-            eval.evaluateModel(classifier, testing);
-
-
-            list.add(new String[]{prefix, Integer.toString(counter), "IBK", Double.toString(eval.precision(1)),
-                    Double.toString(eval.recall(1)), Double.toString(eval.areaUnderROC(1)), Double.toString(eval.kappa())});
         }
 
-        if (value == 1) {
-            Instances training = train.getDataSet();
+        list.add(new String[]{prefix, Integer.toString(counter), Double.toString(counter / Double.parseDouble(numRelease) * 100), String.valueOf(defTrain), String.valueOf(defTest),
+                "IBK", "No Sampling", "No Selection", String.valueOf(eval.truePositiveRate(1)),
+                String.valueOf(eval.falsePositiveRate(1)), String.valueOf(eval.trueNegativeRate(1)), String.valueOf(eval.falseNegativeRate(1)), Double.toString(eval.precision(1)),
+                Double.toString(eval.recall(1)), Double.toString(eval.areaUnderROC(1)), Double.toString(eval.kappa())});
 
-            int numAttr = training.numAttributes();
-            training.setClassIndex(numAttr - 1);
-            testing.setClassIndex(numAttr - 1);
 
-            classifier.buildClassifier(training);
+        AttributeSelection filter = new AttributeSelection();
+        CfsSubsetEval evalFilter = new CfsSubsetEval();
+        GreedyStepwise search = new GreedyStepwise();
+        //set the algorithm to search backward
+        search.setSearchBackwards(true);
+        //set the filter to use the evaluator and search algorithm
+        filter.setEvaluator(evalFilter);
+        filter.setSearch(search);
+        //specify the dataset
+        filter.setInputFormat(training);
+        //apply
+        Instances filteredTraining = Filter.useFilter(training, filter);
 
-            Evaluation eval = new Evaluation(testing);
+        int numAttrFiltered = filteredTraining.numAttributes();
+        //evaluation with filtered
+        filteredTraining.setClassIndex(numAttrFiltered - 1);
+        Instances testingFiltered = Filter.useFilter(testing, filter);
+        testingFiltered.setClassIndex(numAttrFiltered - 1);
+        classifier.buildClassifier(filteredTraining);
+        eval.evaluateModel(classifier, testingFiltered);
 
-            eval.evaluateModel(classifier, testing);
+        list.add(new String[]{prefix, Integer.toString(counter), Double.toString(counter / Double.parseDouble(numRelease) * 100), String.valueOf(defTrain), String.valueOf(defTest),
+                "IBK", "No Sampling", "Best First", String.valueOf(eval.truePositiveRate(1)),
+                String.valueOf(eval.falsePositiveRate(1)), String.valueOf(eval.trueNegativeRate(1)), String.valueOf(eval.falseNegativeRate(1)), Double.toString(eval.precision(1)),
+                Double.toString(eval.recall(1)), Double.toString(eval.areaUnderROC(1)), Double.toString(eval.kappa())});
 
-            list.add(new String[]{prefix, Integer.toString(counter), "IBK", Double.toString(eval.precision(1)),
-                    Double.toString(eval.recall(1)), Double.toString(eval.areaUnderROC(1)), Double.toString(eval.kappa())});
+
+    }
+
+    private void calculateIBKUndersampling(ConverterUtils.DataSource train, ConverterUtils.DataSource test, int counter, List<String[]> list, String csvTest, String csvTrain) throws Exception {
+
+        Instances testing = test.getDataSet();
+        IBk classifier = new IBk();
+        Instances training = train.getDataSet();
+
+        int numAttr = training.numAttributes();
+        training.setClassIndex(numAttr - 1);
+        testing.setClassIndex(numAttr - 1);
+
+        classifier.buildClassifier(training);
+
+        Resample resample = new Resample();
+        resample.setInputFormat(training);
+        FilteredClassifier fc = new FilteredClassifier();
+
+        fc.setClassifier(classifier);
+
+        SpreadSubsample spreadSubsample = new SpreadSubsample();
+        String[] opts = new String[]{"-M", "1.0"};
+        spreadSubsample.setOptions(opts);
+        fc.setFilter(spreadSubsample);
+
+        fc.buildClassifier(training);
+        Evaluation eval = new Evaluation(testing);
+        eval.evaluateModel(fc, testing); //sampled
+
+        try (FileReader fileReader = new FileReader(csvTest);
+             FileReader fileReader1 = new FileReader(csvTrain);
+             CSVReader csvReader = new CSVReader(fileReader);
+             CSVReader csvReader1 = new CSVReader(fileReader1)) {
+
+            defTrain = new WekaEngine().numberOfYesPercentage(csvReader1, numAttr - 1, "YES");
+            defTest = new WekaEngine().numberOfYesPercentage(csvReader, numAttr - 1, "YES");
+
         }
+
+        list.add(new String[]{prefix, Integer.toString(counter), Double.toString(counter / Double.parseDouble(numRelease) * 100), String.valueOf(defTrain), String.valueOf(defTest),
+                "IBK", "Undersampling", "No Selection", String.valueOf(eval.truePositiveRate(1)),
+                String.valueOf(eval.falsePositiveRate(1)), String.valueOf(eval.trueNegativeRate(1)), String.valueOf(eval.falseNegativeRate(1)), Double.toString(eval.precision(1)),
+                Double.toString(eval.recall(1)), Double.toString(eval.areaUnderROC(1)), Double.toString(eval.kappa())});
+
+
+        AttributeSelection filter = new AttributeSelection();
+        CfsSubsetEval evalFilter = new CfsSubsetEval();
+        GreedyStepwise search = new GreedyStepwise();
+        //set the algorithm to search backward
+        search.setSearchBackwards(true);
+        //set the filter to use the evaluator and search algorithm
+        filter.setEvaluator(evalFilter);
+        filter.setSearch(search);
+        //specify the dataset
+        filter.setInputFormat(training);
+        //apply
+        Instances filteredTraining = Filter.useFilter(training, filter);
+
+        int numAttrFiltered = filteredTraining.numAttributes();
+        //evaluation with filtered
+        filteredTraining.setClassIndex(numAttrFiltered - 1);
+        Instances testingFiltered = Filter.useFilter(testing, filter);
+        testingFiltered.setClassIndex(numAttrFiltered - 1);
+        classifier.buildClassifier(filteredTraining);
+        eval.evaluateModel(classifier, testingFiltered);
+
+        list.add(new String[]{prefix, Integer.toString(counter), Double.toString(counter / Double.parseDouble(numRelease) * 100), String.valueOf(defTrain), String.valueOf(defTest),
+                "IBK", "Undersampling", "Best First", String.valueOf(eval.truePositiveRate(1)),
+                String.valueOf(eval.falsePositiveRate(1)), String.valueOf(eval.trueNegativeRate(1)), String.valueOf(eval.falseNegativeRate(1)), Double.toString(eval.precision(1)),
+                Double.toString(eval.recall(1)), Double.toString(eval.areaUnderROC(1)), Double.toString(eval.kappa())});
+
+
+    }
+
+    private void calculateIBKOversampling(ConverterUtils.DataSource train, ConverterUtils.DataSource test, int counter, List<String[]> list, String csvTest, String csvTrain) throws Exception {
+
+        Instances testing = test.getDataSet();
+        IBk classifier = new IBk();
+        Instances training = train.getDataSet();
+
+        int numAttr = training.numAttributes();
+        training.setClassIndex(numAttr - 1);
+        testing.setClassIndex(numAttr - 1);
+
+        classifier.buildClassifier(training);
+
+        Resample resample = new Resample();
+        resample.setInputFormat(training);
+        FilteredClassifier fc = new FilteredClassifier();
+
+        fc.setClassifier(classifier);
+
+        double percentage = (1 - (2 * (counter / (double) numAttr))) * 100;
+
+        String[] opts = new String[]{"-B", "1.0", "-Z", String.valueOf(percentage)};
+        resample.setOptions(opts);
+        fc.setFilter(resample);
+
+        fc.buildClassifier(training);
+        Evaluation eval = new Evaluation(testing);
+        eval.evaluateModel(fc, testing); //sampled
+
+        try (FileReader fileReader = new FileReader(csvTest);
+             FileReader fileReader1 = new FileReader(csvTrain);
+             CSVReader csvReader = new CSVReader(fileReader);
+             CSVReader csvReader1 = new CSVReader(fileReader1)) {
+
+            defTrain = new WekaEngine().numberOfYesPercentage(csvReader1, numAttr - 1, "YES");
+            defTest = new WekaEngine().numberOfYesPercentage(csvReader, numAttr - 1, "YES");
+
+        }
+
+        list.add(new String[]{prefix, Integer.toString(counter), Double.toString(counter / Double.parseDouble(numRelease) * 100), String.valueOf(defTrain), String.valueOf(defTest),
+                "IBK", "Oversampling", "No Selection", String.valueOf(eval.truePositiveRate(1)),
+                String.valueOf(eval.falsePositiveRate(1)), String.valueOf(eval.trueNegativeRate(1)), String.valueOf(eval.falseNegativeRate(1)), Double.toString(eval.precision(1)),
+                Double.toString(eval.recall(1)), Double.toString(eval.areaUnderROC(1)), Double.toString(eval.kappa())});
+
+
+        AttributeSelection filter = new AttributeSelection();
+        CfsSubsetEval evalFilter = new CfsSubsetEval();
+        GreedyStepwise search = new GreedyStepwise();
+        //set the algorithm to search backward
+        search.setSearchBackwards(true);
+        //set the filter to use the evaluator and search algorithm
+        filter.setEvaluator(evalFilter);
+        filter.setSearch(search);
+        //specify the dataset
+        filter.setInputFormat(training);
+        //apply
+        Instances filteredTraining = Filter.useFilter(training, filter);
+
+        int numAttrFiltered = filteredTraining.numAttributes();
+        //evaluation with filtered
+        filteredTraining.setClassIndex(numAttrFiltered - 1);
+        Instances testingFiltered = Filter.useFilter(testing, filter);
+        testingFiltered.setClassIndex(numAttrFiltered - 1);
+        classifier.buildClassifier(filteredTraining);
+        eval.evaluateModel(classifier, testingFiltered);
+
+        list.add(new String[]{prefix, Integer.toString(counter), Double.toString(counter / Double.parseDouble(numRelease) * 100), String.valueOf(defTrain), String.valueOf(defTest),
+                "IBK", "Oversampling", "Best First", String.valueOf(eval.truePositiveRate(1)),
+                String.valueOf(eval.falsePositiveRate(1)), String.valueOf(eval.trueNegativeRate(1)), String.valueOf(eval.falseNegativeRate(1)), Double.toString(eval.precision(1)),
+                Double.toString(eval.recall(1)), Double.toString(eval.areaUnderROC(1)), Double.toString(eval.kappa())});
+
+
+    }
+
+
+    private void calculateIBKSMOTE(ConverterUtils.DataSource train, ConverterUtils.DataSource test, int counter, List<String[]> list, String csvTest, String csvTrain) throws Exception {
+
+        IBk classifier = new IBk();
+
+        Instances testing = test.getDataSet();
+        Instances training = train.getDataSet();
+
+        int numAttr = training.numAttributes();
+        training.setClassIndex(numAttr - 1);
+        testing.setClassIndex(numAttr - 1);
+
+
+        Resample resample = new Resample();
+        resample.setInputFormat(training);
+        FilteredClassifier fc = new FilteredClassifier();
+
+        SMOTE smote = new SMOTE();
+        smote.setInputFormat(training);
+        fc.setFilter(smote);
+        fc.setClassifier(classifier);
+
+        fc.buildClassifier(training);
+
+        Evaluation eval = new Evaluation(testing);
+        eval.evaluateModel(fc, testing); //sampled
+
+        try (FileReader fileReader = new FileReader(csvTest);
+             FileReader fileReader1 = new FileReader(csvTrain);
+             CSVReader csvReader = new CSVReader(fileReader);
+             CSVReader csvReader1 = new CSVReader(fileReader1)) {
+
+            defTrain = new WekaEngine().numberOfYesPercentage(csvReader1, numAttr - 1, "YES");
+            defTest = new WekaEngine().numberOfYesPercentage(csvReader, numAttr - 1, "YES");
+
+        }
+
+        list.add(new String[]{prefix, Integer.toString(counter), Double.toString(counter / Double.parseDouble(numRelease) * 100), String.valueOf(defTrain), String.valueOf(defTest),
+                "IBK", "SMOTE", "No Selection", String.valueOf(eval.truePositiveRate(1)),
+                String.valueOf(eval.falsePositiveRate(1)), String.valueOf(eval.trueNegativeRate(1)), String.valueOf(eval.falseNegativeRate(1)), Double.toString(eval.precision(1)),
+                Double.toString(eval.recall(1)), Double.toString(eval.areaUnderROC(1)), Double.toString(eval.kappa())});
+
+
+        AttributeSelection filter = new AttributeSelection();
+        CfsSubsetEval evalFilter = new CfsSubsetEval();
+        GreedyStepwise search = new GreedyStepwise();
+        //set the algorithm to search backward
+        search.setSearchBackwards(true);
+        //set the filter to use the evaluator and search algorithm
+        filter.setEvaluator(evalFilter);
+        filter.setSearch(search);
+        //specify the dataset
+        filter.setInputFormat(training);
+        //apply
+        Instances filteredTraining = Filter.useFilter(training, filter);
+
+        int numAttrFiltered = filteredTraining.numAttributes();
+        //evaluation with filtered
+        filteredTraining.setClassIndex(numAttrFiltered - 1);
+        Instances testingFiltered = Filter.useFilter(testing, filter);
+        testingFiltered.setClassIndex(numAttrFiltered - 1);
+        classifier.buildClassifier(filteredTraining);
+        eval.evaluateModel(classifier, testingFiltered);
+
+        list.add(new String[]{prefix, Integer.toString(counter), Double.toString(counter / Double.parseDouble(numRelease) * 100), String.valueOf(defTrain), String.valueOf(defTest),
+                "IBK", "SMOTE", "Best First", String.valueOf(eval.truePositiveRate(1)),
+                String.valueOf(eval.falsePositiveRate(1)), String.valueOf(eval.trueNegativeRate(1)), String.valueOf(eval.falseNegativeRate(1)), Double.toString(eval.precision(1)),
+                Double.toString(eval.recall(1)), Double.toString(eval.areaUnderROC(1)), Double.toString(eval.kappa())});
+
+
+    }
+
+    private double numberOfYesPercentage(CSVReader csvReader, int position, String value) throws IOException {
+
+        int size = 0;
+        double ret = 0;
+
+        List<String[]> list = csvReader.readAll();
+        size = list.size();
+
+        for (String[] str : list) {
+
+            if (str[position].equals(value)) {
+                ret++;
+            }
+        }
+
+        return ret/size;
 
     }
 
@@ -251,7 +1022,7 @@ public class WekaEngine {
 
     public static void main(String[] args) throws Exception {
 
-        importResources(1);
+        importResources(0);
         new WekaEngine().writeCSV(new WekaEngine().walkForwardValidation(Integer.parseInt(numRelease)));
     }
 }

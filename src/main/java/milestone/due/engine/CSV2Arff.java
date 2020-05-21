@@ -2,9 +2,11 @@ package milestone.due.engine;
 
 
 //import required classes
+
 import weka.core.Instances;
 import weka.core.converters.ArffSaver;
 import weka.core.converters.CSVLoader;
+
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
@@ -28,7 +30,7 @@ public class CSV2Arff {
     static String prefix = "";
     static String numRelease = "";
 
-    static final String prfName = "\\M1D2";
+    static final String PRF_NAME = "\\M1D2";
 
 
     private static void importResources(int value) {
@@ -74,41 +76,40 @@ public class CSV2Arff {
 
     private void makeArffTest(int value) throws IOException {
 
-        if(value == 0){ //--> 0 testing
-            for(int i = 1; i <= Integer.parseInt(numRelease) ; i++){ //testing
+        if (value == 0) { //--> 0 testing
+            for (int i = 1; i <= Integer.parseInt(numRelease); i++) { //testing
 
                 // load CSV
                 CSVLoader loader = new CSVLoader();
-                loader.setSource(new File(csvPathTesting +prfName+prefix+i+"testing.csv"));
+                loader.setSource(new File(csvPathTesting + PRF_NAME + prefix + i + "testing.csv"));
                 Instances data = loader.getDataSet();//get instances object
 
                 // save ARFF
                 ArffSaver saver = new ArffSaver();
                 saver.setInstances(data);//set the dataset we want to convert
                 //and save as ARFF
-                saver.setFile(new File(arffPathTesting +prfName+prefix+i+"testing.arff"));
+                saver.setFile(new File(arffPathTesting + PRF_NAME + prefix + i + "testing.arff"));
                 saver.writeBatch();
 
             }
-        } else if (value == 1){ // --> 1 training
-            for(int i = 2; i <= Integer.parseInt(numRelease) ; i++){ //testing
+        } else if (value == 1) { // --> 1 training
+            for (int i = 2; i <= Integer.parseInt(numRelease); i++) { //testing
 
                 // load CSV
                 CSVLoader loader = new CSVLoader();
-                loader.setSource(new File(csvPathTraining +prfName+prefix+i+"training.csv"));
+                loader.setSource(new File(csvPathTraining + PRF_NAME + prefix + i + "training.csv"));
                 Instances data = loader.getDataSet();//get instances object
 
                 // save ARFF
                 ArffSaver saver = new ArffSaver();
                 saver.setInstances(data);//set the dataset we want to convert
                 //and save as ARFF
-                saver.setFile(new File(arffPathTraining +prfName+prefix+i+"training.arff"));
+                saver.setFile(new File(arffPathTraining + PRF_NAME + prefix + i + "training.arff"));
                 saver.writeBatch();
             }
         }
 
     }
-
 
 
     public static void main(String[] args) throws Exception {
